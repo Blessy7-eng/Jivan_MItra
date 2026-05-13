@@ -144,7 +144,7 @@ export default function MainLayout() {
       {/* Floating Action Buttons (WhatsApp & SOS) */}
       <div className="fixed bottom-24 right-6 lg:bottom-8 lg:right-8 flex flex-col gap-4 z-50">
          <a 
-            href={`https://wa.me/919876543210?text=${encodeURIComponent("Hello Jivan-Mitra! I need to upload a prescription photo for analysis, or set up my medicine reminders.")}`} 
+            href={`https://wa.me/+14155238886?text=${encodeURIComponent("Hello Jivan-Mitra! I need to upload a prescription photo for analysis, or set up my medicine reminders.")}`} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(37,211,102,0.4)] hover:bg-[#128C7E] hover:scale-110 active:scale-95 transition-all outline-none focus:ring-4 focus:ring-[#25D366]/30 group"
