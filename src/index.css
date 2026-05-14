@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --animate-bounce-slow: bounce 3s ease-in-out infinite;
+}

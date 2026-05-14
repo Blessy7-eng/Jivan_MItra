@@ -3,9 +3,11 @@ import PatientDashboard from "./PatientDashboard";
 import { UploadCloud, FileText, CheckCircle, ShieldCheck, Activity, BrainCircuit } from "lucide-react";
 import { extractPrescription, ExtractedPrescription } from "../services/geminiService";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function RightPanel({ onSaved }: { onSaved: () => void }) {
   const { t } = useLanguage();
+  const { user, setShowAuthModal } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -91,12 +93,22 @@ export default function RightPanel({ onSaved }: { onSaved: () => void }) {
           <div className="space-y-6 h-full flex flex-col">
             {!previewUrl && (
                 <div 
-                   onClick={() => fileInputRef.current?.click()}
-                   className="bg-white border-2 border-dashed border-[#0D47A1]/30 rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-all flex-1 shadow-sm"
+                   onClick={() => {
+                     if (!user) {
+                       setShowAuthModal(true);
+                       return;
+                     }
+                     fileInputRef.current?.click();
+                   }}
+                   className="bg-white border-2 border-dashed border-[#0D47A1]/30 rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-all flex-1 shadow-sm group"
                 >
-                  <UploadCloud size={64} className="text-[#0D47A1]/50 mb-4" strokeWidth={1.5} />
-                  <p className="text-xl font-bold text-[#0D47A1]">Upload Prescription</p>
-                  <p className="text-sm font-semibold text-slate-500 mt-2 text-center max-w-xs">Tap here to scan a physical medical document or prescription</p>
+                  <UploadCloud size={64} className="text-[#0D47A1]/50 mb-4 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
+                  <p className="text-xl font-bold text-[#0D47A1]">
+                    {user ? "Upload Prescription" : "Login to Analyze Prescription"}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-500 mt-2 text-center max-w-xs">
+                    {user ? "Tap here to scan a physical medical document or prescription" : "Secure clinical capabilities require authenticated access."}
+                  </p>
                 </div>
             )}
 

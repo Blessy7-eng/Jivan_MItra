@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { PhoneCall, MapPin, AlertCircle, Loader, User } from "lucide-react";
+import { PhoneCall, MapPin, AlertCircle, Loader, User, ShieldCheck } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Location {
   lat: number;
@@ -9,13 +10,22 @@ interface Location {
 
 export default function SOSCommandCenter() {
   const { t } = useLanguage();
+  const { user, setShowAuthModal, login, loginWithGoogle } = useAuth();
   const [loadingLoc, setLoadingLoc] = useState(false);
   const [location, setLocation] = useState<Location | null>(null);
   const [activeSOS, setActiveSOS] = useState(false);
+  
+  // locating -> notifying_hospitals -> (asking_login if guest) -> done
+  const [step, setStep] = useState<"locating" | "notifying_hospitals" | "asking_login" | "done">("locating");
+
+  const [contactNotified, setContactNotified] = useState(false);
 
   const handleSOS = () => {
     setActiveSOS(true);
     setLoadingLoc(true);
+    setStep("locating");
+    setContactNotified(false);
+    
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -24,16 +34,43 @@ export default function SOSCommandCenter() {
             lng: pos.coords.longitude
           });
           setLoadingLoc(false);
+          processSOS();
         },
         (err) => {
           console.error("Geolocation error:", err);
           setLoadingLoc(false);
+          processSOS();
         }
       );
     } else {
       setLoadingLoc(false);
+      processSOS();
     }
   };
+
+  const processSOS = () => {
+     setStep("notifying_hospitals");
+     
+     // Simulate hospital notification delay
+     setTimeout(() => {
+        if (!user) {
+           setStep("asking_login");
+        } else {
+           setContactNotified(true);
+           setStep("done");
+        }
+     }, 2000);
+  };
+  
+  const handleInstantGoogleLogin = async () => {
+    await loginWithGoogle();
+    setStep("done");
+    setContactNotified(true);
+  };
+
+  const emergencyContactName = user?.emergencyContacts && user.emergencyContacts.length > 0 && user.emergencyContacts[0].name 
+    ? user.emergencyContacts[0].name 
+    : "Primary Contact";
 
   return (
     <div className="bg-white rounded-3xl border border-[#bbdefb] shadow-sm p-8 overflow-hidden h-full flex flex-col">
@@ -64,7 +101,7 @@ export default function SOSCommandCenter() {
                  <div className="bg-red-600 text-white p-8 rounded-3xl text-center shadow-[0_10px_30px_rgba(220,38,38,0.2)]">
                     <AlertCircle size={48} className="mx-auto mb-4 animate-pulse" />
                     <h3 className="text-2xl font-bold uppercase tracking-widest mb-2">Emergency Activated</h3>
-                    <p className="text-red-100 font-semibold">Alerting Dad and searching for nearby medical help...</p>
+                    <p className="text-red-100 font-semibold text-lg">Alerting nearby facilities{user ? ` and ${emergencyContactName}...` : "..."}</p>
                  </div>
 
                  <div className="bg-slate-50 rounded-3xl p-6 border border-slate-200">
@@ -84,36 +121,58 @@ export default function SOSCommandCenter() {
                               </span>
                           </div>
                         </div>
-                      ) : null}
+                      ) : (
+                        <div className="font-bold text-slate-500">Location unavailable. Using generalized area.</div>
+                      )}
                     </div>
 
+                    {/* Contact Notification Section */}
                     <div className="space-y-4">
-                       <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Notifications Sent</h4>
+                       <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Personal Contact Status</h4>
                        
-                       <div className="flex items-center p-3 rounded-2xl bg-white border border-slate-100 shadow-sm gap-4">
-                          <div className="bg-slate-100 p-3 rounded-xl text-slate-600"><User size={24} /></div>
-                          <div className="flex-1">
-                              <p className="font-bold text-slate-800">Dad (Primary Contact)</p>
-                              <p className="text-xs font-bold text-green-600">SMS & Location Sent</p>
-                          </div>
-                       </div>
+                       {step === "asking_login" ? (
+                         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
+                            <ShieldCheck size={28} className="text-amber-500 mx-auto mb-2" />
+                            <p className="text-sm font-bold text-amber-800 mb-3">Login to instantly notify your closest personal contacts.</p>
+                            <button onClick={handleInstantGoogleLogin} className="w-full bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
+                               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-[18px] h-[18px]" />
+                               Instantly Login with Google
+                            </button>
+                         </div>
+                       ) : contactNotified ? (
+                         <div className="flex items-center p-4 rounded-2xl bg-white border border-green-200 shadow-sm gap-4">
+                            <div className="bg-green-50 p-3 rounded-xl text-green-600"><User size={24} /></div>
+                            <div className="flex-1">
+                                <p className="font-bold text-slate-800">{emergencyContactName}</p>
+                                <p className="text-xs font-bold text-green-600 uppercase tracking-widest mt-1">✓ Live Location Sent</p>
+                            </div>
+                         </div>
+                       ) : (
+                         <div className="flex items-center justify-center p-4 gap-2 text-slate-500 font-bold uppercase tracking-widest text-xs">
+                            <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                            Preparing...
+                         </div>
+                       )}
                     </div>
 
-                    <div className="space-y-4 mt-6">
-                       <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Locating Hospitals...</h4>
+                    <div className="space-y-4 mt-6 border-t border-slate-200 pt-6">
+                       <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Hospital Responses</h4>
                        
                        <div className="space-y-3">
                            {[
-                            { name: "City Civil Hospital", distance: "1.2 km", time: "5 mins" },
-                            { name: "Sanjivani Multispeciality", distance: "3.4 km", time: "12 mins" },
+                            { name: "City Civil Hospital", distance: "1.2 km", time: "5 mins", active: step === "done" || step === "asking_login" },
+                            { name: "Sanjivani Multispeciality", distance: "3.4 km", time: "12 mins", active: step === "done" || step === "asking_login" },
                            ].map((h, i) => (
-                              <div key={i} className="flex justify-between items-center p-4 rounded-2xl bg-white border border-slate-100 shadow-sm transition-all hover:border-blue-200 cursor-pointer">
+                              <div key={i} className={`flex justify-between items-center p-4 rounded-2xl bg-white border shadow-sm transition-all ${h.active ? 'border-green-200' : 'border-slate-100 opacity-60'}`}>
                                 <div>
-                                   <p className="font-bold text-slate-800">{h.name}</p>
+                                   <p className="font-bold text-slate-800 flex items-center gap-2">
+                                     {h.name}
+                                     {h.active && <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>}
+                                   </p>
                                    <p className="text-xs font-bold text-slate-500 mt-1">{h.distance} away | Traffic: Light</p>
                                 </div>
-                                <div className="bg-[#0D47A1] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">
-                                  {h.time}
+                                <div className={`${h.active ? 'bg-green-600' : 'bg-slate-300'} text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors`}>
+                                  {h.active ? h.time : "..."}
                                 </div>
                               </div>
                            ))}

@@ -4,9 +4,11 @@ import RightPanel from "./RightPanel";
 import SOSCommandCenter from "./SOSCommandCenter";
 import { Activity, ShieldAlert, HeartPulse, UserCircle, Settings, ClipboardList } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function MainLayout() {
   const { t } = useLanguage();
+  const { user, setShowAuthModal, updateProfile } = useAuth();
   const [activeMenu, setActiveMenu] = useState<"overview" | "sos" | "settings">("overview");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -41,14 +43,23 @@ export default function MainLayout() {
       {/* Left Sidebar: Navigation & Profile */}
       <aside className="hidden lg:flex lg:col-span-2 flex-col gap-6 h-full">
          <div className="bg-white rounded-3xl border border-[#bbdefb] p-5 shadow-sm flex flex-col items-center text-center">
-             <div className="w-20 h-20 bg-[#0D47A1] rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md mb-3">
-                JD
+             <div className="w-20 h-20 bg-[#0D47A1] rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md mb-3">
+                {user ? user.name.substring(0, 1).toUpperCase() : "G"}
              </div>
-             <h2 className="text-lg font-bold text-slate-800">John Doe</h2>
-             <p className="text-xs font-semibold text-slate-500 mb-2">Age: 65 • English</p>
-             <div className="bg-[#E3F2FD] text-[#0D47A1] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-blue-200">
-                ABHA Linked
-             </div>
+             <h2 className="text-lg font-bold text-slate-800">{user ? user.name : "Guest User"}</h2>
+             <p className="text-xs font-semibold text-slate-500 mb-2 truncate max-w-[12rem]">{user ? user.email : "Not logged in"}</p>
+             {user && user.abhaId ? (
+                <div className="bg-[#E3F2FD] text-[#0D47A1] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-blue-200 shadow-sm mt-1">
+                   ABHA: {user.abhaId}
+                </div>
+             ) : (
+                <button 
+                  onClick={() => user ? setActiveMenu('settings') : setShowAuthModal(true)} 
+                  className="bg-slate-50 text-slate-500 hover:text-[#0D47A1] hover:bg-blue-50 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-200 transition-colors mt-1"
+                >
+                  {user ? "+ Add ABHA ID" : "Login to Save Data"}
+                </button>
+             )}
          </div>
 
          <nav className="bg-white rounded-3xl border border-[#bbdefb] p-3 shadow-sm flex-1 flex flex-col gap-2">
@@ -114,29 +125,125 @@ export default function MainLayout() {
             <div className="bg-white rounded-3xl border border-[#bbdefb] shadow-sm p-6 lg:p-8 max-w-2xl mx-auto">
                <h2 className="text-2xl font-bold font-serif text-[#0D47A1] border-b border-slate-100 pb-4 mb-6">Patient Settings</h2>
                
-               <div className="space-y-6">
-                 <div>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-3">Data Consent & Privacy</h3>
-                    <div className="flex items-center justify-between p-4 bg-[#E3F2FD]/50 rounded-2xl border border-blue-100">
-                       <div>
-                          <p className="font-bold text-[#0D47A1]">ABHA Record Linkage</p>
-                          <p className="text-sm font-medium text-slate-600 mt-1">Allow hospitals to access your medical history securely.</p>
-                       </div>
-                       <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
-                         <input type="checkbox" className="sr-only peer" defaultChecked />
-                         <div className="w-14 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[26px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0D47A1]"></div>
-                       </label>
-                    </div>
+               {!user ? (
+                 <div className="text-center py-10">
+                   <p className="text-slate-500 font-semibold mb-6">Please log in to manage your medical profile, ABHA linkage, and emergency contacts.</p>
+                   <button 
+                     onClick={() => setShowAuthModal(true)} 
+                     className="bg-[#0D47A1] text-white px-8 py-3 rounded-xl font-bold shadow-sm hover:bg-blue-900 transition-colors inline-flex items-center gap-2"
+                   >
+                     Log In to Continue
+                   </button>
                  </div>
+               ) : (
+                 <div className="space-y-6">
+                   <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-3">Medical Identity & Privacy</h3>
+                      <div className="flex flex-col gap-3 p-4 bg-[#E3F2FD]/50 rounded-2xl border border-blue-100">
+                         <div>
+                            <p className="font-bold text-[#0D47A1]">ABHA Record Linkage</p>
+                            <p className="text-sm font-medium text-slate-600 mt-1">Allow hospitals to access your medical history securely during emergencies.</p>
+                         </div>
+                         <div className="mt-2">
+                           <input 
+                             type="text" 
+                             placeholder="Enter 14-digit ABHA ID..."
+                             className="w-full bg-white border border-blue-200 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] transition-all"
+                             value={user.abhaId || ""}
+                             onChange={(e) => updateProfile({ abhaId: e.target.value })}
+                           />
+                         </div>
+                      </div>
+                   </div>
 
-                 <div>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-3">Offline Mode</h3>
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                       <p className="font-bold text-slate-800">Service Worker Strategy Active</p>
-                       <p className="text-sm font-medium text-slate-600 mt-1">Your vault and timeline are cached locally. You can access your dosage without an internet connection.</p>
-                    </div>
+                   <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-3">Emergency Setup</h3>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                         <div>
+                           <p className="font-bold text-slate-800">Emergency Contacts</p>
+                           <p className="text-sm font-medium text-slate-600 mt-1">These contacts will be notified automatically with your GPS location when you activate SOS.</p>
+                         </div>
+                         
+                         <div className="space-y-3">
+                           {(user.emergencyContacts || []).map((contact, idx) => (
+                             <div key={contact.id} className="flex flex-col sm:flex-row gap-2">
+                               <input
+                                 type="text"
+                                 placeholder="Name (e.g. Dad)"
+                                 className="flex-1 bg-white border border-slate-300 rounded-xl py-2 px-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                 value={contact.name}
+                                 onChange={(e) => {
+                                   const next = [...(user.emergencyContacts || [])];
+                                   next[idx] = { ...next[idx], name: e.target.value };
+                                   updateProfile({ emergencyContacts: next });
+                                 }}
+                               />
+                               <input
+                                 type="tel"
+                                 placeholder="Phone (+91...)"
+                                 className="flex-1 bg-white border border-slate-300 rounded-xl py-2 px-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                 value={contact.phone}
+                                 onChange={(e) => {
+                                   const next = [...(user.emergencyContacts || [])];
+                                   next[idx] = { ...next[idx], phone: e.target.value };
+                                   updateProfile({ emergencyContacts: next });
+                                 }}
+                               />
+                               <button 
+                                 onClick={() => {
+                                    const next = [...(user.emergencyContacts || [])];
+                                    next.splice(idx, 1);
+                                    updateProfile({ emergencyContacts: next });
+                                 }}
+                                 className="bg-red-50 text-red-500 px-3 py-2 rounded-xl text-sm font-bold hover:bg-red-100 flex items-center justify-center min-w-[3rem]"
+                                 title="Remove Contact"
+                               >
+                                 ✕
+                               </button>
+                             </div>
+                           ))}
+                         </div>
+
+                         <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                           <button
+                             onClick={() => {
+                                const next = [...(user.emergencyContacts || []), { id: Math.random().toString(), name: "", phone: "" }];
+                                updateProfile({ emergencyContacts: next });
+                             }}
+                             className="text-[#0D47A1] font-bold text-sm bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-200 hover:bg-blue-100 flex-1 text-center transition-colors"
+                           >
+                              + Add New Contact
+                           </button>
+                           <button
+                             onClick={(e) => {
+                               const btn = e.currentTarget;
+                               const originalText = btn.innerText;
+                               btn.innerText = "✓ Saved!";
+                               btn.classList.replace("bg-[#0D47A1]", "bg-green-600");
+                               btn.classList.replace("hover:bg-blue-900", "hover:bg-green-700");
+                               setTimeout(() => {
+                                 btn.innerText = originalText;
+                                 btn.classList.replace("bg-green-600", "bg-[#0D47A1]");
+                                 btn.classList.replace("hover:bg-green-700", "hover:bg-blue-900");
+                               }, 2000);
+                             }}
+                             className="bg-[#0D47A1] text-white font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-blue-900 flex-1 text-center transition-colors shadow-sm"
+                           >
+                              Save Settings
+                           </button>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-3">Offline Mode</h3>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                         <p className="font-bold text-slate-800">Service Worker Strategy Active</p>
+                         <p className="text-sm font-medium text-slate-600 mt-1">Your vault and timeline are cached locally. You can access your dosage without an internet connection.</p>
+                      </div>
+                   </div>
                  </div>
-               </div>
+               )}
             </div>
          </div>
       )}
