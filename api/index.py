@@ -13,6 +13,7 @@ if gemini_api_key:
     genai.configure(api_key=gemini_api_key)
 
 MODEL_NAME = "gemini-2.0-flash"
+DISCLAIMER = "⚠️ Note: This is an AI transcription. Please verify with your doctor or pharmacist before taking medication."
 
 @app.post("/api/whatsapp")
 async def whatsapp_webhook(
@@ -26,11 +27,10 @@ async def whatsapp_webhook(
     try:
         if not gemini_api_key:
             print("Warning: GEMINI_API_KEY is not set.")
-            twiml.message("System is not currently configured. Please try again later.")
+            twiml.message(f"System is not currently configured. Please try again later.\n\n{DISCLAIMER}")
             return Response(content=str(twiml), media_type="application/xml")
 
         model = genai.GenerativeModel(MODEL_NAME)
-        
         reply_text = ""
 
         if MediaUrl0:
@@ -41,7 +41,8 @@ async def whatsapp_webhook(
             image_data = response.content
             mime_type = response.headers.get("Content-Type", "image/jpeg")
 
-            prompt = "Extract medicine names and dosages from this prescription. Simplify it for a patient in Marathi and Hindi."
+            prompt = "Analyze this medical prescription image. Accurately extract all medicine names, dosages, and daily schedules. Format the output in clean bullet points, translated clearly into simple Hindi and Marathi so a patient can easily understand."
+            
             if body_text:
                 prompt += f" The user also said: '{body_text}'."
 
@@ -58,18 +59,18 @@ async def whatsapp_webhook(
             reply_text = ai_response.text
 
         elif body_text:
-            prompt = f"Act as a helpful medical assistant named 'Mitra'. A user has sent the following message: '{body_text}'. Respond concisely and helpfully. Emphasize that you are an AI and they should consult a real doctor for serious medical conditions."
+            prompt = f"Act as a helpful, localized medical chatbot named 'Mitra'. A user has sent the following message: '{body_text}'. Answer any basic health inquiries or guide them on how to interact with the bot."
             ai_response = model.generate_content(prompt)
             reply_text = ai_response.text
 
         else:
-            reply_text = "Namaste! Welcome to Jivan-Mitra. Please send a text query or a photo of your prescription, and I will assist you."
+            reply_text = "Welcome to Jivan-Mitra! Please send a text query or a photo of your prescription. Make sure you have joined the sandbox by texting 'join while-label' to +14155238886."
             
-        final_reply = f"{reply_text}\n\nNote: This is an AI assistant, not professional medical advice."
+        final_reply = f"{reply_text}\n\n{DISCLAIMER}"
         twiml.message(final_reply)
 
     except Exception as e:
         print(f"Error handling WhatsApp webhook: {e}")
-        twiml.message("Sorry, I encountered an error right now. Please try again later.\n\nNote: Please verify with your doctor or pharmacist on medical matters.")
+        twiml.message(f"Sorry, I encountered an error. If you cannot connect, make sure you have joined the sandbox by texting 'join while-label' to +14155238886.\n\n{DISCLAIMER}")
 
     return Response(content=str(twiml), media_type="application/xml")

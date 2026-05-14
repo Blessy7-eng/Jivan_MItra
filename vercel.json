@@ -1,6 +1,10 @@
 {
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build" },
+    { "src": "api/index.py", "use": "@vercel/python" }
+  ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/api/(.*)", "destination": "api/index.py" },
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }
