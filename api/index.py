@@ -12,7 +12,7 @@ gemini_api_key = os.environ.get("GEMINI_API_KEY")
 if gemini_api_key:
     genai.configure(api_key=gemini_api_key)
 
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = "gemini-3-flash-preview"
 DISCLAIMER = "⚠️ Note: This is an AI transcription. Please verify with your doctor or pharmacist before taking medication."
 
 @app.post("/api/whatsapp")

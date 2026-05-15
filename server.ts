@@ -87,7 +87,7 @@ async function startServer() {
           `Identify the medicines in this prescription. For each, give the name, dosage, and time (Morning/Afternoon/Night). Translate the result into Hindi or Marathi. Keep it simple and life-saving. Return the data structured according to the schema.`;
 
         aiResponse = await ai.models.generateContent({
-          model: "gemini-2.0-flash",
+          model: "gemini-3-flash-preview",
           contents: [
               {
                  role: "user",
@@ -147,7 +147,7 @@ async function startServer() {
         Please provide a helpful, concise response. Emphasize that you are an AI and they should consult a real doctor for serious issues. Return your response in JSON format.`;
         
         aiResponse = await ai.models.generateContent({
-          model: "gemini-2.0-flash",
+          model: "gemini-3-flash-preview",
           contents: [
               { role: "user", parts: [{ text: promptText }] }
           ],

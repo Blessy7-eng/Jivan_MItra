@@ -4,7 +4,9 @@ let ai: GoogleGenAI;
 
 function getAi() {
   if (!ai) {
-    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_ });
+    // Attempt to access API key directly from import.meta.env or process.env depending on Vite config
+    const apiKey = import.meta.env?.VITE_GEMINI_API_KEY || (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : "") || "";
+    ai = new GoogleGenAI({ apiKey });
   }
   return ai;
 }
@@ -19,12 +21,34 @@ export interface ExtractedPrescription {
   timing: ("morning" | "afternoon" | "evening" | "night")[];
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function generateWithRetry(model: string, contents: any, config?: any, retries = 3) {
+  const aiClient = getAi();
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await aiClient.models.generateContent({
+        model,
+        contents,
+        config
+      });
+    } catch (error: any) {
+      if (error?.status === 429 || error?.message?.includes('RESOURCE_EXHAUSTED') || error?.message?.includes('429')) {
+        if (i === retries - 1) throw error;
+        await sleep(2000 * (i + 1)); // Backoff
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error("Failed to generate content after retries");
+}
+
 export async function extractPrescription(base64Image: string, mimeType: string): Promise<{ data: ExtractedPrescription | null, raw: string }> {
   try {
-    const aiClient = getAi();
-    const response = await aiClient.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: {
+    const response = await generateWithRetry(
+      "gemini-3-flash-preview",
+      {
         parts: [
           {
             inlineData: {
@@ -37,7 +61,7 @@ export async function extractPrescription(base64Image: string, mimeType: string)
           }
         ]
       },
-      config: {
+      {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -57,7 +81,7 @@ export async function extractPrescription(base64Image: string, mimeType: string)
           required: ["drugName", "dosage", "frequency", "duration", "purpose", "precautions", "timing"]
         }
       }
-    });
+    );
 
     const text = response.text?.trim() || "";
     try {
@@ -74,10 +98,9 @@ export async function extractPrescription(base64Image: string, mimeType: string)
 
 export async function verifyPill(pillImageBase64: string, mimeType: string, expectedDrug: string): Promise<boolean | string> {
   try {
-    const aiClient = getAi();
-    const response = await aiClient.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: {
+    const response = await generateWithRetry(
+      "gemini-3-flash-preview",
+      {
         parts: [
           {
             inlineData: {
@@ -90,7 +113,7 @@ export async function verifyPill(pillImageBase64: string, mimeType: string, expe
           }
         ]
       }
-    });
+    );
     return response.text?.trim() || "Uncertain";
   } catch (error) {
     console.error("Error verifying pill:", error);
