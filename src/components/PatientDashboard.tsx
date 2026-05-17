@@ -19,13 +19,17 @@ export default function PatientDashboard({ refreshTrigger }: { refreshTrigger?: 
   useEffect(() => {
     setLoading(true);
     fetch("/api/prescriptions")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch prescriptions");
+        return res.json();
+      })
       .then((data) => {
-        setPrescriptions(data);
+        setPrescriptions(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch((err) => {
         console.error("Failed to fetch prescriptions:", err);
+        setPrescriptions([]); // fallback to empty array gracefully
         setLoading(false);
       });
   }, [refreshTrigger]);
@@ -73,7 +77,7 @@ export default function PatientDashboard({ refreshTrigger }: { refreshTrigger?: 
         </div>
       ) : (
         <div className="space-y-3">
-          {prescriptions.map((rx) => (
+          {(Array.isArray(prescriptions) ? prescriptions : []).map((rx) => (
             <div key={rx.id} className="bg-white rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow group">
               <div className="flex items-start justify-between">
                  <div className="flex gap-4 items-start">
@@ -85,7 +89,7 @@ export default function PatientDashboard({ refreshTrigger }: { refreshTrigger?: 
                      <p className="text-xs font-bold text-slate-500">{rx.extractedData?.dosage || "-"} • {rx.extractedData?.duration || "-"}</p>
                      
                      <div className="flex flex-wrap gap-1.5 mt-3">
-                       {(rx.extractedData?.timing || []).map((tId, idx) => (
+                       {(Array.isArray(rx.extractedData?.timing) ? rx.extractedData.timing : []).map((tId, idx) => (
                           <div key={idx} className="flex items-center gap-1.5 bg-[#E3F2FD] border border-blue-100 px-2.5 py-1 rounded-md text-[10px] font-bold text-[#0D47A1] uppercase tracking-widest shadow-sm">
                               {getTimingIcon(tId)}
                               {tId}

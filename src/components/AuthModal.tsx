@@ -22,17 +22,23 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
+    >
       <div className="bg-white rounded-3xl w-full max-w-md p-8 relative overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
         <button 
           onClick={() => setShowAuthModal(false)}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 transition-colors p-2 rounded-full hover:bg-slate-100"
+          aria-label="Close modal"
         >
           <X size={24} strokeWidth={2.5} />
         </button>
         
         <div className="mb-8 mt-2 text-center">
-          <h2 className="text-2xl font-bold font-serif text-[#0D47A1]">
+          <h2 id="auth-modal-title" className="text-2xl font-bold font-serif text-[#0D47A1]">
             {isLogin ? "Welcome Back" : "Create Account"}
           </h2>
           <p className="text-sm font-semibold text-slate-500 mt-1">

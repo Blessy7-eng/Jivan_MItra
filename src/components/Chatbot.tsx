@@ -306,7 +306,7 @@ export default function Chatbot({ onClose }: ChatbotProps) {
                    </div>
                 )}
                 
-                {parsedData?.facilities && (
+                {parsedData?.facilities && Array.isArray(parsedData.facilities) && (
                    <div className="mb-4 space-y-3">
                       {parsedData.facilities.map((facility: any, i: number) => (
                          <div key={i} className={`p-3 rounded-xl border ${isDark ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-200"}`}>

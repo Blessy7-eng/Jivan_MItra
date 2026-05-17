@@ -169,7 +169,7 @@ export default function MainLayout() {
                          </div>
                          
                          <div className="space-y-3">
-                           {(user.emergencyContacts || []).map((contact, idx) => (
+                           {(Array.isArray(user.emergencyContacts) ? user.emergencyContacts : []).map((contact, idx) => (
                              <div key={contact.id} className="flex flex-col sm:flex-row gap-2">
                                <input
                                  type="text"

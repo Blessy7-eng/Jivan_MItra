@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "https://your-external-backend-url.com/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
