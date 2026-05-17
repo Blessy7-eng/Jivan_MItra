@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "name": "Jivan-Mitra AI Doctor",
+  "description": "An AI doctor and medical assistant chatbot with voice recognition and text-to-speech.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

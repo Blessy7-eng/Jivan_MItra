@@ -8,7 +8,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 app = FastAPI()
 
 # Configure Gemini
-gemini_api_key = os.environ.get("GEMINI_API_KEY")
+gemini_api_key = os.environ.get("GEMINI_API_KEY_")
 if gemini_api_key:
     genai.configure(api_key=gemini_api_key)
 
@@ -26,7 +26,7 @@ async def whatsapp_webhook(
 
     try:
         if not gemini_api_key:
-            print("Warning: GEMINI_API_KEY is not set.")
+            print("Warning: GEMINI_API_KEY_ is not set.")
             twiml.message(f"System is not currently configured. Please try again later.\n\n{DISCLAIMER}")
             return Response(content=str(twiml), media_type="application/xml")
 

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import PatientDashboard from "./PatientDashboard";
 import RightPanel from "./RightPanel";
 import SOSCommandCenter from "./SOSCommandCenter";
-import { Activity, ShieldAlert, HeartPulse, UserCircle, Settings, ClipboardList } from "lucide-react";
+import Chatbot from "./Chatbot";
+import { Activity, ShieldAlert, HeartPulse, UserCircle, Settings, ClipboardList, MessageCircle } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -11,9 +12,12 @@ export default function MainLayout() {
   const { user, setShowAuthModal, updateProfile } = useAuth();
   const [activeMenu, setActiveMenu] = useState<"overview" | "sos" | "settings">("overview");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showChatbot, setShowChatbot] = useState(false);
 
   return (
     <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:h-[calc(100vh-100px)] pb-24 lg:pb-0">
+      {showChatbot && <Chatbot onClose={() => setShowChatbot(false)} />}
+      
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 flex justify-around items-center p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}>
         <button 
@@ -248,8 +252,16 @@ export default function MainLayout() {
          </div>
       )}
 
-      {/* Floating Action Buttons (WhatsApp & SOS) */}
+      {/* Floating Action Buttons (Chatbot, WhatsApp & SOS) */}
       <div className="fixed bottom-24 right-6 lg:bottom-8 lg:right-8 flex flex-col gap-4 z-50">
+         <button 
+            onClick={() => setShowChatbot(true)}
+            className="w-14 h-14 bg-[#0D47A1] text-white rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(13,71,161,0.4)] hover:bg-[#002171] hover:scale-110 active:scale-95 transition-all outline-none focus:ring-4 focus:ring-blue-500/30 group"
+            title="Chat with Web Chatbot (Jivan-Mitra)"
+         >
+            <MessageCircle size={26} strokeWidth={2.5} className="z-10 group-hover:scale-110 transition-transform" />
+         </button>
+
          <a 
             href={`https://wa.me/+14155238886?text=${encodeURIComponent("Hello Jivan-Mitra! I need to upload a prescription photo for analysis, or set up my medicine reminders.")}`} 
             target="_blank" 
