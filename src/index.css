@@ -5,3 +5,18 @@
 @theme {
   --animate-bounce-slow: bounce 3s ease-in-out infinite;
 }
+
+body {
+  top: 0 !important;
+}
+
+.skiptranslate, 
+#goog-gt-tt, 
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
